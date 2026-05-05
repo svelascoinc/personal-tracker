@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker Personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --bg2: #151618;
+    --bg3: #1c1e21;
+    --bg4: #242629;
+    --border: #2a2d31;
+    --border2: #363a40;
+    --text: #e8eaed;
+    --text2: #9aa0aa;
+    --text3: #5a6170;
+    --accent: #4ade9a;
+    --accent2: #2db870;
+    --accent-dim: #1a3d2b;
+    --red: #f05454;
+    --red-dim: #3a1a1a;
+    --amber: #f0a030;
+    --amber-dim: #3a2a0a;
+    --blue: #5a9ef0;
+    --blue-dim: #1a2a3a;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 50;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .sprint-badge {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .sprint-badge span { color: var(--accent); }
+
+  .btn-icon {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-icon:hover { border-color: var(--border2); color: var(--text); }
+
+  /* NAV TABS */
+  .nav {
+    display: flex;
+    gap: 0;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .nav-tab {
+    padding: 12px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--text3);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .nav-tab:hover { color: var(--text2); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN LAYOUT */
+  .main { padding: 24px 32px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* SPRINT HEADER */
+  .sprint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .sprint-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .sprint-range {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .sprint-actions { display: flex; gap: 8px; }
+
+  /* OVERDUE BANNER */
+  .overdue-banner {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--red);
+  }
+
+  .overdue-banner.visible { display: flex; }
+
+  /* KANBAN */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .col-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+  .col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .col-name {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    font-weight: 500;
+  }
+
+  .col-name.todo { color: var(--text3); }
+  .col-name.doing { color: var(--blue); }
+  .col-name.done { color: var(--accent); }
+
+  .col-count {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg3);
+    border-radius: 99px;
+    padding: 1px 8px;
+  }
+
+  .col-body {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 10px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* TASK CARD */
+  .task-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-card:hover { border-color: var(--border2); }
+  .task-card.overdue { border-left: 2px solid var(--red); }
+
+  .task-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .task-title {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .task-title.done-title {
+    text-decoration: line-through;
+    color: var(--text3);
+  }
+
+  .pri-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .pri-high { background: var(--red); }
+  .pri-medium { background: var(--amber); }
+  .pri-low { background: var(--accent); }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .tag-cat {
+    background: var(--bg4);
+    color: var(--text3);
+    border: 1px solid var(--border);
+  }
+
+  .tag-sprint {
+    background: var(--blue-dim);
+    color: var(--blue);
+  }
+
+  .tag-date {
+    font-size: 10px;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .tag-date.overdue { color: var(--red); }
+
+  .first-step {
+    font-size: 11px;
+    color: var(--text3);
+    border-left: 2px solid var(--border2);
+    padding-left: 8px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .task-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .task-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.12s;
+    letter-spacing: 0.02em;
+  }
+
+  .task-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .task-btn.primary { border-color: var(--accent-dim); color: var(--accent); }
+  .task-btn.primary:hover { background: var(--accent-dim); }
+  .task-btn.danger { border-color: var(--red-dim); color: var(--red); }
+  .task-btn.danger:hover { background: var(--red-dim); }
+  .task-btn.cal { border-color: var(--blue-dim); color: var(--blue); }
+  .task-btn.cal:hover { background: var(--blue-dim); }
+
+  .col-add {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 8px;
+    width: 100%;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: auto;
+  }
+
+  .col-add:hover { border-color: var(--border2); color: var(--text2); background: var(--bg3); }
+
+  .empty-col {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* SPRINT HISTORY */
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .history-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+
+  .history-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .history-sprint-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .history-pct {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .history-bar {
+    height: 3px;
+    background: var(--bg4);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .history-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .history-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .history-stats span { color: var(--text2); }
+
+  /* HABITS */
+  .habits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .habit-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+
+  .habit-card:hover { border-color: var(--border2); }
+
+  .habit-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+
+  .habit-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .habit-goal {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 16px;
+  }
+
+  .streak-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .streak-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .streak-label {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .habit-dots {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .habit-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+  }
+
+  .habit-dot.filled { background: var(--accent); border-color: var(--accent2); }
+  .habit-dot.today-empty { border-color: var(--border2); }
+
+  .habit-pct {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .habit-pct span { color: var(--text2); }
+
+  .check-btn {
+    width: 100%;
+    padding: 7px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .check-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+  .check-btn.checked { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* STATS */
+  .stats-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-val.accent { color: var(--accent); }
+  .stat-val.danger { color: var(--red); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .chart-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 16px;
+  }
+
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+
+  .bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    background: var(--accent-dim);
+    border-radius: 3px 3px 0 0;
+    border: 1px solid var(--accent);
+    border-bottom: none;
+    transition: height 0.4s ease;
+    min-height: 2px;
+    position: relative;
+  }
+
+  .bar-val {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .bar-lbl { font-size: 10px; color: var(--text3); }
+
+  .hbar-wrap { display: flex; flex-direction: column; gap: 10px; }
+
+  .hbar-row { display: flex; align-items: center; gap: 10px; }
+
+  .hbar-name { font-size: 11px; color: var(--text2); width: 160px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .hbar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+
+  .hbar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  .hbar-fill.good { background: var(--accent); }
+  .hbar-fill.warn { background: var(--amber); }
+  .hbar-fill.bad { background: var(--red); }
+
+  .hbar-pct { font-size: 11px; color: var(--text3); width: 35px; text-align: right; }
+
+  /* MODAL */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 420px;
+    max-width: 95vw;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .field { margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field select option { background: var(--bg3); }
+  .field textarea { resize: vertical; min-height: 60px; }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border2);
+    background: none;
+    color: var(--text2);
+  }
+
+  .btn:hover { background: var(--bg3); color: var(--text); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* EXPORT PANEL */
+  .export-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-top: 24px;
+  }
+
+  .export-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .export-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* SECTION DIVIDER */
+  .section-sep {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 16px;
+  }
+
+  .section-sep-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  .section-sep-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* GOOGLE DRIVE STATUS */
+  .drive-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .drive-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+  }
+
+  .drive-dot.connected { background: var(--accent); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* SPRINT FILTER */
+  .sprint-filter {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .sprint-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .sprint-pill:hover { border-color: var(--border2); color: var(--text2); }
+  .sprint-pill.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    TRACKER
+  </div>
+  <div class="header-meta">
+    <div class="drive-status">
+      <div class="drive-dot" id="drive-dot"></div>
+      <span id="drive-label">Drive: local</span>
+    </div>
+    <div class="sprint-badge">Sprint <span id="header-sprint">—</span></div>
+    <button class="btn-icon" onclick="exportJSON()">↓ export</button>
+    <button class="btn-icon" onclick="importJSON()">↑ import</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-tab active" onclick="switchTab('kanban')">Kanban</button>
+  <button class="nav-tab" onclick="switchTab('history')">Historial</button>
+  <button class="nav-tab" onclick="switchTab('habits')">Hábitos</button>
+  <button class="nav-tab" onclick="switchTab('stats')">Stats</button>
+</nav>
+
+<main class="main">
+
+  <!-- KANBAN -->
+  <div id="tab-kanban" class="section active">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title" id="sprint-title">Sprint actual</div>
+        <div class="sprint-range" id="sprint-range"></div>
+      </div>
+      <div class="sprint-actions">
+        <button class="btn" onclick="closeSprint()">Cerrar sprint</button>
+        <button class="btn-icon" onclick="sendAllToCalendar()">📅 Enviar todo a Calendar</button>
+        <button class="btn btn-accent" onclick="openAddTask('todo')">+ tarea</button>
+      </div>
+    </div>
+
+    <div class="overdue-banner" id="overdue-banner">
+      <span style="color:var(--red)">⚠</span>
+      <span id="overdue-text"></span>
+    </div>
+
+    <div class="kanban">
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name todo">Pendiente</span>
+          <span class="col-count" id="cnt-todo">0</span>
+        </div>
+        <div class="col-body" id="col-todo"></div>
+        <button class="col-add" onclick="openAddTask('todo')">+ agregar</button>
+      </div>
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name doing">En progreso</span>
+          <span class="col-count" id="cnt-doing">0</span>
+        </div>
+        <div class="col-body" id="col-doing"></div>
+        <button class="col-add" onclick="openAddTask('doing')">+ agregar</button>
+      </div>
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name done">Completada</span>
+          <span class="col-count" id="cnt-done">0</span>
+        </div>
+        <div class="col-body" id="col-done"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div id="tab-history" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Historial de sprints</div>
+        <div class="sprint-range">Todos los sprints cerrados</div>
+      </div>
+    </div>
+    <div id="history-content"></div>
+  </div>
+
+  <!-- HÁBITOS -->
+  <div id="tab-habits" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Hábitos</div>
+        <div class="sprint-range">Seguimiento diario</div>
+      </div>
+      <button class="btn btn-accent" onclick="openAddHabit()">+ hábito</button>
+    </div>
+    <div class="habits-grid" id="habits-grid"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Estadísticas</div>
+        <div class="sprint-range" id="stats-range"></div>
+      </div>
+    </div>
+    <div class="stats-top" id="stats-top"></div>
+    <div class="chart-card">
+      <div class="chart-title">Tareas completadas por sprint</div>
+      <div class="bar-chart" id="chart-sprints"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cumplimiento de hábitos — últimos 14 días</div>
+      <div class="hbar-wrap" id="chart-habits"></div>
+    </div>
+    <div class="export-panel">
+      <div class="export-title">Exportar para análisis con Claude Cowork</div>
+      <div class="export-actions">
+        <button class="btn" onclick="exportJSON()">↓ JSON completo</button>
+        <button class="btn" onclick="exportSummary()">↓ Resumen de texto</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+const STORAGE_KEY = 'tracker-v1';
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function today() { return new Date().toISOString().slice(0,10); }
+function getWeekId(d = new Date()) {
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+function getWeekRange(weekId) {
+  const [y, w] = weekId.split('-W').map(Number);
+  const jan1 = new Date(y, 0, 1);
+  const days = (w - 1) * 7;
+  const start = new Date(jan1.getTime() + days * 86400000);
+  start.setDate(start.getDate() - start.getDay() + 1);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('es', {day:'numeric',month:'short'});
+  return `${fmt(start)} — ${fmt(end)}`;
+}
+
+let state = { tasks: [], habits: [], sprints: [], currentSprintId: null };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+  if (!state.currentSprintId) initSprint();
+  render();
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function initSprint() {
+  const id = getWeekId();
+  const existing = state.sprints.find(s => s.id === id);
+  if (!existing) {
+    state.sprints.push({ id, range: getWeekRange(id), closed: false, closedAt: null });
+  }
+  state.currentSprintId = id;
+  save();
+}
+
+function currentSprint() {
+  return state.sprints.find(s => s.id === state.currentSprintId) || {};
+}
+
+function closeSprint() {
+  if (!confirm('¿Cerrar el sprint actual y comenzar uno nuevo?')) return;
+  const sp = currentSprint();
+  if (sp) { sp.closed = true; sp.closedAt = today(); }
+  state.tasks.filter(t => t.sprintId === state.currentSprintId && t.status !== 'done')
+    .forEach(t => t.rolledOver = true);
+  initSprint();
+  state.tasks.filter(t => t.rolledOver && t.status !== 'done')
+    .forEach(t => { t.sprintId = state.currentSprintId; delete t.rolledOver; });
+  save(); render();
+}
+
+// RENDER
+function render() {
+  renderKanban();
+  renderHabits();
+  renderStats();
+  renderHistory();
+  const sp = currentSprint();
+  document.getElementById('header-sprint').textContent = state.currentSprintId || '—';
+  document.getElementById('sprint-title').textContent = `Sprint ${state.currentSprintId || ''}`;
+  document.getElementById('sprint-range').textContent = sp.range || '';
+}
+
+function renderKanban() {
+  const sprintTasks = state.tasks.filter(t => t.sprintId === state.currentSprintId);
+  const cols = { todo: [], doing: [], done: [] };
+  sprintTasks.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
+  const overdue = sprintTasks.filter(t => t.due && t.due < today() && t.status !== 'done');
+  const banner = document.getElementById('overdue-banner');
+  if (overdue.length) {
+    banner.classList.add('visible');
+    document.getElementById('overdue-text').textContent =
+      `${overdue.length} tarea${overdue.length > 1 ? 's' : ''} vencida${overdue.length > 1 ? 's' : ''} — requieren atención.`;
+  } else banner.classList.remove('visible');
+
+  ['todo','doing','done'].forEach(s => {
+    document.getElementById('cnt-'+s).textContent = cols[s].length;
+    const el = document.getElementById('col-'+s);
+    if (!cols[s].length) { el.innerHTML = '<div class="empty-col">— vacío —</div>'; return; }
+    el.innerHTML = cols[s].map(t => taskCardHTML(t, s)).join('');
+  });
+}
+
+function taskCardHTML(t, col) {
+  const od = t.due && t.due < today() && col !== 'done';
+  const priClass = { high:'pri-high', medium:'pri-medium', low:'pri-low' }[t.priority] || 'pri-medium';
+  const doneTitle = col === 'done' ? 'done-title' : '';
+  return `<div class="task-card ${od ? 'overdue' : ''}">
+    <div class="task-card-top">
+      <div class="task-title ${doneTitle}">${t.title}</div>
+      <div class="pri-dot ${priClass}"></div>
+    </div>
+    <div class="task-meta">
+      <span class="tag tag-cat">${t.category}</span>
+      ${t.due ? `<span class="tag-date ${od ? 'overdue' : ''}">${t.due}</span>` : ''}
+    </div>
+    ${t.firstStep ? `<div class="first-step">→ ${t.firstStep}</div>` : ''}
+    <div class="task-actions">
+      ${col === 'todo' ? `<button class="task-btn primary" onclick="moveTask('${t.id}','doing')">→ iniciar</button>` : ''}
+      ${col === 'doing' ? `<button class="task-btn primary" onclick="moveTask('${t.id}','done')">✓ completar</button>` : ''}
+      ${col !== 'done' ? `<button class="task-btn cal" onclick="taskToCalendar('${t.id}')">📅 calendar</button>` : ''}
+      <button class="task-btn danger" onclick="deleteTask('${t.id}')">✕</button>
+    </div>
+  </div>`;
+}
+
+function renderHistory() {
+  const closed = state.sprints.filter(s => s.closed).reverse();
+  const el = document.getElementById('history-content');
+  if (!closed.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:40px 0;text-align:center;">Sin sprints cerrados todavía.</div>';
+    return;
+  }
+  const grid = closed.map(sp => {
+    const tasks = state.tasks.filter(t => t.sprintId === sp.id);
+    const done = tasks.filter(t => t.status === 'done').length;
+    const total = tasks.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const fill = pct >= 70 ? 'var(--accent)' : pct >= 40 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="history-card">
+      <div class="history-card-head">
+        <div>
+          <div class="history-sprint-name">${sp.id}</div>
+          <div style="font-size:11px;color:var(--text3)">${sp.range}</div>
+        </div>
+        <div class="history-pct" style="color:${fill}">${pct}%</div>
+      </div>
+      <div class="history-bar"><div class="history-bar-fill" style="width:${pct}%;background:${fill}"></div></div>
+      <div class="history-stats">
+        <div>completadas <span>${done}</span></div>
+        <div>total <span>${total}</span></div>
+        <div>cerrado <span>${sp.closedAt || '—'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="history-grid">${grid}</div>`;
+}
+
+function renderHabits() {
+  const el = document.getElementById('habits-grid');
+  if (!state.habits.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;">Sin hábitos. Agrega uno.</div>';
+    return;
+  }
+  el.innerHTML = state.habits.map(h => habitCardHTML(h)).join('');
+}
+
+function habitCardHTML(h) {
+  const last14 = getLast14(h);
+  const filled = last14.filter(Boolean).length;
+  const pct = Math.round((filled / 14) * 100);
+  const streak = getStreak(h);
+  const checkedToday = (h.log || []).includes(today());
+  const dots = last14.map((v, i) => {
+    const isToday = i === 13;
+    return `<div class="habit-dot ${v ? 'filled' : isToday ? 'today-empty' : ''}"></div>`;
+  }).join('');
+  return `<div class="habit-card">
+    <div class="habit-top">
+      <div class="habit-name">${h.name}</div>
+    </div>
+    <div class="habit-goal">${h.goal}</div>
+    <div class="streak-display">
+      <div class="streak-num">${streak}</div>
+      <div class="streak-label">días<br>seguidos</div>
+    </div>
+    <div class="habit-dots">${dots}</div>
+    <div class="habit-pct"><span>${pct}%</span> últimos 14 días</div>
+    <button class="check-btn ${checkedToday ? 'checked' : ''}" onclick="checkHabit('${h.id}')">
+      ${checkedToday ? '✓ completado hoy' : 'marcar hoy'}
+    </button>
+  </div>`;
+}
+
+function getLast14(h) {
+  return Array.from({length:14}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate() - (13 - i));
+    return (h.log || []).includes(d.toISOString().slice(0,10));
+  });
+}
+
+function getStreak(h) {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    if ((h.log || []).includes(d.toISOString().slice(0,10))) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function renderStats() {
+  const allDone = state.tasks.filter(t => t.status === 'done').length;
+  const allTotal = state.tasks.length;
+  const overdue = state.tasks.filter(t => t.due && t.due < today() && t.status !== 'done').length;
+  const maxStreak = state.habits.length ? Math.max(...state.habits.map(getStreak)) : 0;
+  const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
+
+  document.getElementById('stats-range').textContent = `Total acumulado · ${state.sprints.length} sprints`;
+  document.getElementById('stats-top').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Cumplimiento global</div><div class="stat-val accent">${pct}%</div><div class="stat-sub">${allDone} de ${allTotal} tareas</div></div>
+    <div class="stat-card"><div class="stat-label">Vencidas ahora</div><div class="stat-val ${overdue ? 'danger' : ''}">${overdue}</div><div class="stat-sub">requieren acción</div></div>
+    <div class="stat-card"><div class="stat-label">Mejor racha</div><div class="stat-val accent">${maxStreak}</div><div class="stat-sub">días consecutivos</div></div>
+    <div class="stat-card"><div class="stat-label">Sprints totales</div><div class="stat-val">${state.sprints.length}</div><div class="stat-sub">${state.sprints.filter(s=>s.closed).length} cerrados</div></div>
+  `;
+
+  // Bar chart sprints
+  const chartEl = document.getElementById('chart-sprints');
+  const last6 = state.sprints.slice(-6);
+  if (!last6.length) { chartEl.innerHTML = '<div style="color:var(--text3);font-size:11px">Sin datos</div>'; }
+  else {
+    const maxVal = Math.max(...last6.map(sp => state.tasks.filter(t => t.sprintId === sp.id && t.status === 'done').length), 1);
+    chartEl.innerHTML = last6.map(sp => {
+      const val = state.tasks.filter(t => t.sprintId === sp.id && t.status === 'done').length;
+      const h = Math.round((val / maxVal) * 100);
+      return `<div class="bar-wrap">
+        <div class="bar-val">${val}</div>
+        <div class="bar" style="height:${h}%"></div>
+        <div class="bar-lbl">${sp.id.split('-W')[1] ? 'W'+sp.id.split('-W')[1] : sp.id}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Habit horizontal bars
+  const habEl = document.getElementById('chart-habits');
+  if (!state.habits.length) { habEl.innerHTML = '<div style="color:var(--text3);font-size:11px">Sin hábitos</div>'; }
+  else {
+    habEl.innerHTML = state.habits.map(h => {
+      const pct = Math.round((getLast14(h).filter(Boolean).length / 14) * 100);
+      const cls = pct >= 70 ? 'good' : pct >= 40 ? 'warn' : 'bad';
+      return `<div class="hbar-row">
+        <div class="hbar-name">${h.name}</div>
+        <div class="hbar-track"><div class="hbar-fill ${cls}" style="width:${pct}%"></div></div>
+        <div class="hbar-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ACTIONS
+function moveTask(id, status) {
+  const t = state.tasks.find(t => t.id === id);
+  if (t) { t.status = status; if (status === 'done') t.completedAt = today(); }
+  save(); render();
+}
+
+function deleteTask(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  save(); render();
+}
+
+function checkHabit(id) {
+  const h = state.habits.find(h => h.id === id);
+  if (!h) return;
+  if (!h.log) h.log = [];
+  const t = today();
+  h.log = h.log.includes(t) ? h.log.filter(d => d !== t) : [...h.log, t];
+  save(); renderHabits();
+}
+
+function taskToCalendar(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  const date = (t.due || today()).replace(/-/g, '');
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${date}/${date}&details=${encodeURIComponent(`Sprint: ${t.sprintId}\nPrioridad: ${t.priority}\nCategoría: ${t.category}${t.firstStep ? '\nPrimer paso: '+t.firstStep : ''}`)}`;
+  window.open(url, '_blank');
+}
+
+function sendAllToCalendar() {
+  const pending = state.tasks.filter(t => t.sprintId === state.currentSprintId && t.status !== 'done');
+  if (!pending.length) { alert('No hay tareas pendientes para enviar.'); return; }
+  if (!confirm(`¿Abrir ${pending.length} eventos en Google Calendar?`)) return;
+  pending.forEach((t, i) => setTimeout(() => taskToCalendar(t.id), i * 400));
+}
+
+// MODALS
+function openAddTask(defaultStatus) {
+  showModal(`<div class="modal-title">Nueva tarea</div>
+    <div class="field"><label>Título</label><input id="f-title" placeholder="Nombre claro y accionable" autofocus/></div>
+    <div class="field"><label>Primer paso (obligatorio)</label><input id="f-step" placeholder="La acción más pequeña para empezar"/></div>
+    <div class="field"><label>Categoría</label><select id="f-cat">
+      <option>trabajo</option><option>aprendizaje</option><option>hábito</option><option>personal</option>
+    </select></div>
+    <div class="field"><label>Prioridad</label><select id="f-pri">
+      <option value="high">Alta</option><option value="medium" selected>Media</option><option value="low">Baja</option>
+    </select></div>
+    <div class="field"><label>Fecha límite</label><input type="date" id="f-due" value="${today()}"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="addTask('${defaultStatus}')">Agregar</button>
+    </div>`);
+}
+
+function addTask(status) {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) return;
+  state.tasks.push({
+    id: uid(), title,
+    firstStep: document.getElementById('f-step').value.trim(),
+    category: document.getElementById('f-cat').value,
+    priority: document.getElementById('f-pri').value,
+    due: document.getElementById('f-due').value,
+    status, sprintId: state.currentSprintId,
+    createdAt: today()
+  });
+  save(); closeModal(); render();
+}
+
+function openAddHabit() {
+  showModal(`<div class="modal-title">Nuevo hábito</div>
+    <div class="field"><label>Nombre</label><input id="h-name" placeholder="Ej: Trabajo profundo" autofocus/></div>
+    <div class="field"><label>Meta diaria</label><input id="h-goal" placeholder="Ej: 60 minutos sin distracciones"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="addHabit()">Agregar</button>
+    </div>`);
+}
+
+function addHabit() {
+  const name = document.getElementById('h-name').value.trim();
+  if (!name) return;
+  state.habits.push({ id: uid(), name, goal: document.getElementById('h-goal').value.trim(), log: [] });
+  save(); closeModal(); renderHabits();
+}
+
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// EXPORT / IMPORT
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tracker-${today()}.json`;
+  a.click();
+}
+
+function exportSummary() {
+  const sp = currentSprint();
+  const tasks = state.tasks.filter(t => t.sprintId === state.currentSprintId);
+  const done = tasks.filter(t => t.status === 'done');
+  const pending = tasks.filter(t => t.status !== 'done');
+  const habits = state.habits.map(h => {
+    const pct = Math.round((getLast14(h).filter(Boolean).length / 14) * 100);
+    return `- ${h.name}: ${pct}% cumplimiento, racha ${getStreak(h)} días`;
+  }).join('\n');
+  const allSprints = state.sprints.filter(s => s.closed).map(s => {
+    const t = state.tasks.filter(x => x.sprintId === s.id);
+    const d = t.filter(x => x.status === 'done').length;
+    return `- ${s.id} (${s.range}): ${d}/${t.length} completadas`;
+  }).join('\n');
+
+  const text = `# REPORTE TRACKER — ${today()}
+
+## Sprint actual: ${state.currentSprintId}
+Rango: ${sp.range}
+Completadas: ${done.length} | Pendientes: ${pending.length}
+
+### Pendientes:
+${pending.map(t => `- [${t.priority.toUpperCase()}] ${t.title} (vence: ${t.due || 'sin fecha'})`).join('\n') || 'ninguna'}
+
+### Completadas este sprint:
+${done.map(t => `- ${t.title}`).join('\n') || 'ninguna'}
+
+## Hábitos (últimos 14 días):
+${habits || 'sin hábitos registrados'}
+
+## Historial de sprints:
+${allSprints || 'sin sprints cerrados'}
+
+## Estadísticas globales:
+- Total tareas: ${state.tasks.length}
+- Completadas: ${state.tasks.filter(t => t.status === 'done').length}
+- Tasa global: ${state.tasks.length ? Math.round((state.tasks.filter(t=>t.status==='done').length/state.tasks.length)*100) : 0}%
+`;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reporte-${today()}.txt`;
+  a.click();
+}
+
+function importJSON() { document.getElementById('import-input').click(); }
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (confirm('¿Reemplazar todos los datos actuales con el archivo importado?')) {
+        state = imported;
+        save(); render();
+      }
+    } catch { alert('Archivo JSON inválido.'); }
+  };
+  reader.readAsText(file);
+}
+
+// TABS
+function switchTab(t) {
+  document.querySelectorAll('.nav-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['kanban','history','habits','stats'][i] === t);
+  });
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+// KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') openAddTask('todo');
+});
+
+load();
+</script>
+</body>
+</html>
