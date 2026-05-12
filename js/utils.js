@@ -18,15 +18,3 @@ function getWeekRange(weekId) {
   const fmt = d => d.toLocaleDateString('es', {day:'numeric',month:'short'});
   return `${fmt(start)} — ${fmt(end)}`;
 }
-
-function getUpcomingWeeks(count = 6) {
-  const weeks = [];
-  const d = new Date();
-  for (let i = 1; i <= count; i++) {
-    const nd = new Date(d);
-    nd.setDate(nd.getDate() + i * 7);
-    const id = getWeekId(nd);
-    if (!weeks.find(w => w.id === id)) weeks.push({ id, range: getWeekRange(id) });
-  }
-  return weeks;
-}
