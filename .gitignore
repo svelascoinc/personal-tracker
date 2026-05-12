@@ -1,0 +1,11 @@
+tracker-data.json
+.DS_Store
+
+# Configuración con datos sensibles — nunca committear
+config.js
+
+# Engram memory — sincronizar manualmente con engram export/import
+.engram/
+
+# Tooling personal
+.gga

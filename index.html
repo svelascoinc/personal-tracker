@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker Personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    TRACKER
+  </div>
+  <div class="header-meta">
+    <div class="drive-status">
+      <div class="drive-dot" id="drive-dot"></div>
+      <span id="drive-label">Drive: local</span>
+    </div>
+    <div class="sprint-badge">Sprint <span id="header-sprint">—</span></div>
+    <div class="pom-inline" id="pom-inline">
+      <div class="pom-info-pill">
+        <span class="pom-emoji">🍅</span>
+        <span id="pom-time" class="pom-time-text">25:00</span>
+        <span id="pom-phase" class="pom-phase-label focus">FOCO</span>
+        <div id="pom-dots" class="pom-dots">
+          <span class="pom-dot"></span><span class="pom-dot"></span>
+          <span class="pom-dot"></span><span class="pom-dot"></span>
+        </div>
+      </div>
+      <button id="pom-toggle" class="pom-ctrl" onclick="Pomodoro.toggle()">▶</button>
+      <button class="pom-ctrl" onclick="Pomodoro.reset()" title="Reiniciar">↺</button>
+      <button class="pom-ctrl" onclick="Pomodoro.skip()" title="Saltar fase">⏭</button>
+    </div>
+    <button class="theme-toggle" id="btn-theme" onclick="toggleTheme()">☀</button>
+    <button class="btn-icon" id="btn-reminders" onclick="Reminders.toggle()">🔔 OFF</button>
+    <button class="btn-icon" onclick="exportJSON()">↓ export</button>
+    <button class="btn-icon" onclick="importJSON()">↑ import</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-tab active" onclick="switchTab('kanban')">Kanban</button>
+  <button class="nav-tab" onclick="switchTab('history')">Historial</button>
+  <button class="nav-tab" onclick="switchTab('habits')">Hábitos</button>
+  <button class="nav-tab" onclick="switchTab('stats')">Stats</button>
+  <button class="nav-tab" onclick="switchTab('epics')">Épicas</button>
+  <button class="nav-tab" onclick="switchTab('backlog')">Backlog</button>
+</nav>
+
+<main class="main">
+
+  <!-- KANBAN -->
+  <div id="tab-kanban" class="section active">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title" id="sprint-title">Sprint actual</div>
+        <div class="sprint-range" id="sprint-range"></div>
+      </div>
+      <div class="sprint-actions">
+        <button class="btn" onclick="closeSprint()">Cerrar sprint</button>
+        <button class="btn-icon" onclick="sendAllToCalendar()">📅 Enviar todo a Calendar</button>
+        <button class="btn btn-accent" onclick="openAddTask('todo')">+ tarea</button>
+      </div>
+    </div>
+
+    <div class="overdue-banner" id="overdue-banner">
+      <span style="color:var(--red)">⚠</span>
+      <span id="overdue-text"></span>
+    </div>
+
+    <div class="kanban">
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name todo">Pendiente</span>
+          <span class="col-count" id="cnt-todo">0</span>
+        </div>
+        <div class="col-body" id="col-todo"></div>
+        <button class="col-add" onclick="openAddTask('todo')">+ agregar</button>
+      </div>
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name doing">En progreso</span>
+          <span class="col-count" id="cnt-doing">0</span>
+        </div>
+        <div class="col-body" id="col-doing"></div>
+        <button class="col-add" onclick="openAddTask('doing')">+ agregar</button>
+      </div>
+      <div class="col-wrap">
+        <div class="col-head">
+          <span class="col-name done">Completada</span>
+          <span class="col-count" id="cnt-done">0</span>
+        </div>
+        <div class="col-body" id="col-done"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div id="tab-history" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Historial de sprints</div>
+        <div class="sprint-range">Todos los sprints cerrados</div>
+      </div>
+    </div>
+    <div id="history-content"></div>
+  </div>
+
+  <!-- HÁBITOS -->
+  <div id="tab-habits" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Hábitos</div>
+        <div class="sprint-range">Registro · activos generan tarea diaria automáticamente</div>
+      </div>
+      <button class="btn btn-accent" onclick="openAddHabit()">+ registrar hábito</button>
+    </div>
+    <div class="habits-grid" id="habits-grid"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Estadísticas</div>
+        <div class="sprint-range" id="stats-range"></div>
+      </div>
+    </div>
+    <div class="stats-top" id="stats-top"></div>
+    <div class="chart-card">
+      <div class="chart-title">Tareas completadas por sprint</div>
+      <div class="bar-chart" id="chart-sprints"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cumplimiento de hábitos — últimos 14 días</div>
+      <div class="hbar-wrap" id="chart-habits"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Progreso de épicas</div>
+      <div class="hbar-wrap" id="chart-epics"></div>
+    </div>
+    <div class="export-panel">
+      <div class="export-title">Exportar para análisis con Claude Cowork</div>
+      <div class="export-actions">
+        <button class="btn" onclick="exportJSON()">↓ JSON completo</button>
+        <button class="btn" onclick="exportSummary()">↓ Reporte de análisis</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉPICAS -->
+  <div id="tab-epics" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Épicas</div>
+        <div class="sprint-range">Objetivos a largo plazo · agrupa tareas relacionadas</div>
+      </div>
+      <button class="btn btn-accent" onclick="openAddEpic()">+ épica</button>
+    </div>
+    <div class="epics-grid" id="epics-grid"></div>
+  </div>
+
+  <!-- BACKLOG -->
+  <div id="tab-backlog" class="section">
+    <div class="sprint-header">
+      <div>
+        <div class="sprint-title">Backlog</div>
+        <div class="sprint-range">Tareas sin sprint · programadas migran automáticamente</div>
+      </div>
+      <button class="btn btn-accent" onclick="openAddBacklogTask()">+ tarea backlog</button>
+    </div>
+    <div class="backlog-filters" id="backlog-filters">
+      <button class="sprint-pill active" onclick="filterBacklog('all',this)">Todas</button>
+      <button class="sprint-pill" onclick="filterBacklog('unassigned',this)">Sin asignar</button>
+      <button class="sprint-pill" onclick="filterBacklog('scheduled',this)">Programadas</button>
+    </div>
+    <div id="backlog-list"></div>
+  </div>
+
+</main>
+
+
+<select id="pom-task" style="display:none"></select>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script src="config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/drive.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/app.js"></script>
+<script src="https://accounts.google.com/gsi/client" onload="Drive.init(); Calendar.init()"></script>
+</body>
+</html>
