@@ -71,8 +71,24 @@ function migrateSchema(data) {
       h.description = h.description ?? (h.goal || '');
     });
   }
+  if (data.schemaVersion < 3) {
+    data.schemaVersion = 3;
+    // Reparar tareas con rolledOver=true que nunca se reasignaron al sprint actual.
+    // Esto ocurre cuando el save() se ejecutaba antes de la reasignación en versiones anteriores.
+    const currentId = data.currentSprintId;
+    if (currentId) {
+      (data.tasks || [])
+        .filter(t => t.rolledOver === true && t.status !== 'done' && t.status !== 'deleted')
+        .forEach(t => {
+          t.sprintId  = currentId;
+          t.updatedAt = new Date().toISOString();
+          delete t.rolledOver;
+        });
+    }
+  }
   return data;
 }
+
 
 // ─── PERSIST ─────────────────────────────────────────────────────────────────
 
@@ -111,17 +127,37 @@ function initSprint() {
 function autoAdvanceSprint() {
   const currentWeek = getWeekId();
   if (!state.currentSprintId || state.currentSprintId === currentWeek) return;
-  const old = state.sprints.find(s => s.id === state.currentSprintId);
-  if (old && !old.closed) { old.closed = true; old.closedAt = today(); }
-  // Roll over non-habit pending tasks
+
+  // Cerrar todos los sprints pasados que quedaron abiertos (cubre saltos de múltiples semanas)
+  state.sprints
+    .filter(s => !s.closed && s.id !== currentWeek)
+    .forEach(s => { s.closed = true; s.closedAt = today(); });
+
+  // Identificar IDs de sprints pasados cerrados (todo sprint que no sea la semana actual)
+  const pastSprintIds = new Set(
+    state.sprints.filter(s => s.closed && s.id !== currentWeek).map(s => s.id)
+  );
+
+  // Marcar tareas pendientes de CUALQUIER sprint pasado (no solo el inmediato anterior)
   state.tasks
-    .filter(t => t.sprintId === state.currentSprintId && t.status !== 'done' && t.status !== 'deleted' && !t.habitId)
-    .forEach(t => { t.rolledOver = true; });
-  initSprint();
+    .filter(t =>
+      pastSprintIds.has(t.sprintId) &&
+      t.status !== 'done' &&
+      t.status !== 'deleted' &&
+      !t.habitId   // los hábitos los gestiona syncHabitTasks()
+    )
+    .forEach(t => { t.rolledOver = true; t.updatedAt = nowISO(); });
+
+  initSprint(); // crea el sprint W21 y setea state.currentSprintId
+
+  // Reasignar al sprint nuevo
   state.tasks
     .filter(t => t.rolledOver && t.status !== 'done')
     .forEach(t => { t.sprintId = state.currentSprintId; delete t.rolledOver; });
+
+  save(); // ← persistir la reasignación ANTES de que Drive pueda sobreescribir
 }
+
 
 function syncHabitTasks() {
   const activeHabits = (state.habits || []).filter(h => (h.status || 'active') === 'active');
@@ -233,6 +269,7 @@ function taskCardHTML(t, col) {
       ${col === 'doing' ? `<button class="task-btn primary" onclick="moveTask('${t.id}','done')">✓ completar</button>` : ''}
       ${col !== 'done'  ? `<button class="task-btn cal"     onclick="taskToCalendar('${t.id}')">📅 calendar</button>` : ''}
       <button class="task-btn" onclick="openEditTask('${t.id}')">✎ editar</button>
+      <button class="task-btn" onclick="cloneTask('${t.id}')" title="Clonar tarea">⎘ clonar</button>
       <button class="task-btn danger" onclick="deleteTask('${t.id}')">✕</button>
     </div>
   </div>`;
@@ -741,6 +778,42 @@ function saveEditTask(id) {
   if (t.calendarEventId) Calendar.updateEvent(t).catch(console.error);
   save(); closeModal(); render();
 }
+
+function cloneTask(id) {
+  const src = state.tasks.find(t => t.id === id);
+  if (!src) return;
+  const esc = s => (s || '').replace(/"/g, '&quot;');
+  const activeEpics = (state.epics || []).filter(e => e.status !== 'done');
+  const epicOpts = activeEpics.map(e =>
+    `<option value="${e.id}" ${src.epicId === e.id ? 'selected' : ''}>${e.title}</option>`
+  ).join('');
+  const epicField = activeEpics.length
+    ? `<div class="field"><label>Épica (opcional)</label><select id="f-epic">
+        <option value="" ${!src.epicId ? 'selected' : ''}>— sin épica —</option>${epicOpts}
+       </select></div>`
+    : '';
+  showModal(`<div class="modal-title">⎘ Clonar tarea</div>
+    <div class="field"><label>Título</label><input id="f-title" value="${esc(src.title)}" autofocus/></div>
+    <div class="field"><label>Descripción de tarea</label><input id="f-step" value="${esc(src.firstStep)}"/></div>
+    <div class="field"><label>Categoría</label><select id="f-cat">
+      ${['trabajo','aprendizaje','hábito','personal'].map(c =>
+        `<option ${src.category === c ? 'selected' : ''}>${c}</option>`
+      ).join('')}
+    </select></div>
+    <div class="field"><label>Prioridad</label><select id="f-pri">
+      <option value="high"   ${src.priority === 'high'   ? 'selected' : ''}>Alta</option>
+      <option value="medium" ${src.priority === 'medium' ? 'selected' : ''}>Media</option>
+      <option value="low"    ${src.priority === 'low'    ? 'selected' : ''}>Baja</option>
+    </select></div>
+    <div class="field"><label>Fecha límite</label><input type="date" id="f-due" value="${src.due || ''}"/></div>
+    ${epicField}
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="addTask(null, true)">→ Backlog</button>
+      <button class="btn btn-accent" onclick="addTask('todo')">Agregar al sprint</button>
+    </div>`);
+}
+
 
 // ─── MODALES ──────────────────────────────────────────────────────────────────
 
