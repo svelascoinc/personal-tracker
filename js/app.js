@@ -1472,9 +1472,16 @@ function saveScheduleTask(id) {
 
 // ─── KEYBOARD ─────────────────────────────────────────────────────────────────
 
+function _isTyping() {
+  const el  = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
-  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') openAddTask('todo');
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !_isTyping()) openAddTask('todo');
 });
 
 document.addEventListener('visibilitychange', () => {
